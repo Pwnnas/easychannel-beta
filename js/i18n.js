@@ -2,8 +2,7 @@
    EasyChannel IPTV — Closed beta site
    Language handling (EN / SV):
      1. saved preference (localStorage)
-     2. IP geolocation — Swedish IP => Swedish
-     3. browser language as a fallback
+     2. browser language (navigator.languages)
    ========================================================== */
 (function () {
   "use strict";
@@ -29,7 +28,7 @@
         "EasyChannel is a fast, modern IPTV experience for Android — live TV, a full TV guide with catch-up, and a movie & series library. We're opening a closed beta and we want your eyes on it.",
       "hero.cta1": "Join the tester group",
       "hero.cta2": "Open on Google Play",
-      "hero.note": "Free to join · Android · Updates through the Play Store",
+      "hero.note": "Free to join · Android 11+ · Bring your own provider (Xtream or M3U)",
 
       "steps.title": "How to join the beta",
       "steps.sub": "Four quick steps and you're in — it takes about two minutes.",
@@ -51,7 +50,7 @@
 
       "step4.title": "Test & share your feedback",
       "step4.text":
-        "Watch live TV, browse the guide and the movie library — and tell us what works and what doesn't. Everything you post in the group lands directly in the developer's inbox.",
+        "Please keep the app installed for at least three weeks — that makes the testing much easier. Watch live TV, browse the guide and the movie library, and tell us what works and what doesn't. Everything you post in the group lands directly in the developer's inbox.",
       "step4.cta": "Go to the group",
 
       "know.title": "What we're looking for",
@@ -106,6 +105,10 @@
       "faq4.a":
         "Post it in the tester group: your device model, Android version, the steps to reproduce the issue, and a screenshot if you can. Every post is emailed straight to the developer, so nothing slips through the cracks.",
 
+      "faq5.q": "Do I need my own IPTV provider?",
+      "faq5.a":
+        "Yes — EasyChannel includes no channels or content; log in with your own Xtream Codes or M3U provider. Just want to look around first? Use the free demo: choose Xtream Codes, server https://easychannel-demo.sharedevil.org, username demo, password demo. It has open-licensed films, live test channels and format tests (MKV, Dolby 5.1, HEVC, 4K).",
+
       "cta.title": "Ready to try it?",
       "cta.sub": "Join the group, opt in on Google Play, and be one of the first to watch.",
       "cta.btn1": "Join the tester group",
@@ -115,7 +118,7 @@
       "footer.l1": "Tester group",
       "footer.l2": "Google Play",
       "footer.right": "Built with care by Pwnnas.",
-      "footer.legal": "© 2026 EasyChannel IPTV"
+      "footer.legal": "© 2026 EasyChannel IPTV · No channels or content included · Screenshots show Blender Foundation open movies (CC BY)"
     },
 
     sv: {
@@ -136,7 +139,7 @@
         "EasyChannel är en snabb och modern IPTV-upplevelse för Android – live-TV, en komplett TV-guide med catch-up samt ett bibliotek med film och serier. Nu öppnar vi en stängd beta, och vi vill ha dina ögon på appen.",
       "hero.cta1": "Gå med i testargruppen",
       "hero.cta2": "Öppna i Google Play",
-      "hero.note": "Gratis att delta · Android · Uppdateringar via Play-butiken",
+      "hero.note": "Gratis att delta · Android 11+ · Använd din egen leverantör (Xtream eller M3U)",
 
       "steps.title": "Så går du med i betan",
       "steps.sub": "Fyra snabba steg och du är med – det tar cirka två minuter.",
@@ -158,7 +161,7 @@
 
       "step4.title": "Testa och dela din feedback",
       "step4.text":
-        "Kolla live-TV, bläddra i guiden och filmbiblioteket – och berätta vad som fungerar och vad som inte gör det. Allt du skriver i gruppen hamnar direkt i utvecklarens inkorg.",
+        "Behåll gärna appen installerad i minst tre veckor – det underlättar testningen mycket. Kolla live-TV, bläddra i guiden och filmbiblioteket, och berätta vad som fungerar och vad som inte gör det. Allt du skriver i gruppen hamnar direkt i utvecklarens inkorg.",
       "step4.cta": "Gå till gruppen",
 
       "know.title": "Det här hjälper oss med",
@@ -213,6 +216,10 @@
       "faq4.a":
         "Skicka ett inlägg i testargruppen: din enhetsmodell, Android-version, stegen för att återskapa felet och en skärmdump om du kan. Varje inlägg mejlas rakt in i utvecklarens inkorg – så inget glöms.",
 
+      "faq5.q": "Behöver jag en egen IPTV-leverantör?",
+      "faq5.a":
+        "Ja – EasyChannel innehåller inga kanaler eller annat innehåll; du loggar in med din egen leverantör (Xtream Codes eller M3U). Vill du bara titta runt först? Använd den fria demon: välj Xtream Codes, server https://easychannel-demo.sharedevil.org, användarnamn demo, lösenord demo. Den har öppet licensierade filmer, testkanaler och formattester (MKV, Dolby 5.1, HEVC, 4K).",
+
       "cta.title": "Klar att testa?",
       "cta.sub": "Gå med i gruppen, acceptera betan i Google Play och var en av de första att titta.",
       "cta.btn1": "Gå med i testargruppen",
@@ -222,7 +229,7 @@
       "footer.l1": "Testargrupp",
       "footer.l2": "Google Play",
       "footer.right": "Byggd med omsorg av Pwnnas.",
-      "footer.legal": "© 2026 EasyChannel IPTV"
+      "footer.legal": "© 2026 EasyChannel IPTV · Inga kanaler eller innehåll ingår · Skärmbilderna visar Blender Foundations öppna filmer (CC BY)"
     }
   };
 
@@ -278,63 +285,14 @@
 
   /* ---------- language detection ---------- */
 
-  function fetchCountry() {
-    var endpoints = ["https://ipwho.is/", "https://ipapi.co/json/"];
-
-    function attempt(idx) {
-      if (idx >= endpoints.length) return Promise.resolve(null);
-      return new Promise(function (resolve) {
-        var done = false;
-        var timer = null;
-        try {
-          var req;
-          if (typeof AbortController !== "undefined") {
-            var ctrl = new AbortController();
-            timer = setTimeout(function () {
-              ctrl.abort();
-            }, 3500);
-            req = fetch(endpoints[idx], { signal: ctrl.signal });
-          } else {
-            req = fetch(endpoints[idx]);
-          }
-          req
-            .then(function (res) {
-              if (!res.ok) throw new Error("bad status");
-              return res.json();
-            })
-            .then(function (data) {
-              if (done) return;
-              done = true;
-              if (timer) clearTimeout(timer);
-              var cc = data.country_code || data.country;
-              if (typeof cc === "string" && cc.length >= 2) {
-                resolve(cc.toUpperCase().slice(0, 2));
-              } else {
-                return attempt(idx + 1).then(resolve);
-              }
-            })
-            .catch(function () {
-              if (done) return;
-              done = true;
-              if (timer) clearTimeout(timer);
-              attempt(idx + 1).then(resolve);
-            });
-        } catch (err) {
-          if (timer) clearTimeout(timer);
-          resolve(null);
-        }
-      });
-    }
-
-    return attempt(0);
-  }
-
   function detectInitialLang() {
-    return fetchCountry().then(function (cc) {
-      if (cc === "SE") return "sv";
-      var nav = (navigator.language || "").toLowerCase();
-      return nav.indexOf("sv") === 0 ? "sv" : "en";
-    });
+    // Browser language only: no lookup that sends the visitor's address to a third party.
+    var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+    for (var i = 0; i < langs.length; i++) {
+      var code = String(langs[i]).toLowerCase().slice(0, 2);
+      if (I18N[code]) return code;
+    }
+    return "en";
   }
 
   /* ---------- init ---------- */
@@ -356,11 +314,7 @@
     // explicit choice from a previous visit wins
     applyLang(saved);
   } else {
-    // paint instantly in English, then refine with detection
-    applyLang("en");
-    detectInitialLang().then(function (lang) {
-      applyLang(lang);
-    });
+    applyLang(detectInitialLang());
   }
 
   /* ---------- scroll reveal ----------
